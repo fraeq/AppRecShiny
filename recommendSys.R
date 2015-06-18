@@ -137,11 +137,15 @@ finalCor <- function(wF=0.5,wT=0.5){
 suggestion <- function(CorMat=finCor,price=testUser[12],num=5){
   # set the database key to match all the hotel with the desired price, cancel out the double, and take the num- most correlated
   setkey(CorMat,Price)
-  Choice <- CorMat[Price==price,.(unique(Hotel),][1:num]
+  Choice <- CorMat[Price==price,.(unique(Hotel)),][1:num]
   # set the data base key in order to find the code and name of the hotel suggested 
-  setkey(trip,hotel)
-  return(trip[Code==Choice,.(Code,hotel)])
+  setkey(trip,Code)
+ 
+  return( trip[Code==Choice$V1,.(Code,hotel)])
 }
+
+
+
 
 # random user as comparison
 testUser <- funTester(trip)
@@ -160,3 +164,4 @@ finCor<-finalCor(wF=1,wT=10)
 suggestion(price=1)
 #save the data for the shiny app
 #save(list=c("fb","trip"),file="data.Rdata")
+
