@@ -8,7 +8,7 @@ rm(list=ls())
 setwd("/Users/francescocontin/Dropbox/rec/data")
 #libraries
 library(data.table)
-#library(package="bit64")
+library(package="bit64")
 
 
 # load the Facebook data
