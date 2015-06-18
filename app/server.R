@@ -49,23 +49,13 @@ funTesterG <- function(trip,rep=10){
     # this is sampling randomly a user 
     RandUser<-sample(x=fb$id,size=1)
     # random select a row of the hotel matrix
-    tripper[i,1]<-as.character(RandUser) # random user saved in the output
-    tripper[i,2:12]<-t(apply(tripDF[hotel,6:16],1,shuffler)) # Shuffler function applied to the hotel data 
-    # set the names to the new data frame
-    setnames(tripper,c("User","Hotel","VaCode",names(tripDF[,6:16])))
-  }
-  # this is sampling randomly a user 
-  RandUser<-sample(x=fb$id,size=10)
-  # random select a row of the hotel matrix
-  hotel <- sample(x=1:dim(trip)[1],1) 
-  # save in test
-  test<-as.character(RandUser)
-  # apply the function as in the main matrix
-  test<-c(test,t(apply(tripDF[hotel,6:16],1,shuffler)))
-  # save the result in the convinent structure
-  test<-as.numeric(as.character(test))
-  names(test) <- c("User",names(tripDF[,6:16]))
-  return(test)
+    hotel <- sample(x=1:dim(trip)[1],1) 
+    TestUsers[i,1]<-as.character(RandUser) # random user saved in the output
+    TestUsers[i,2:12]<-t(apply(tripDF[hotel,6:16],1,shuffler)) # Shuffler function applied to the hotel data 
+    }
+  # set the names to the new data frame
+  setnames(TestUsers,c("User",names(tripDF[,6:16])))
+  return(TestUsers)
 }
 
 ###################################################################################################
@@ -145,7 +135,7 @@ suggestion <- function(CorMat=finCor,price=testUser[12],num=5){
 
 
 # random user as comparison
-testUser <- funTester(trip)
+testUser <- funTesterG(trip)
 
 # create the score for the personality 
 #scoreFb<-fbScore(fb)[[1]]
