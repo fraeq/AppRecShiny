@@ -6,9 +6,9 @@ library(data.table)
 load("data.Rdata")
 #create the function to associate to the useres a trip randomly choosen
 ### this function modifies lightly the preferences from what the hotel is offering
-shuffler  <- function(x){
+shuffler  <- function(x,std=1){
   # the hotel value for each feature is added by a random discrete Value
-  x <-x+ round(rnorm(n=1,mean=0,sd=1),0)
+  x <-x+ round(rnorm(n=1,mean=0,sd=std),0)
   # test if the score is included in the proper values {0,1,2,3}
   x<-ifelse(test=x > 0 & x < 3,yes=x,no=ifelse(test=x<0,yes=0,no=3))
   return(x)
@@ -19,9 +19,9 @@ funTripper<-function(trip,rep=1000){
   # rep defines the number of travel to create, so high becouse we have 171 people on fb and I want at least one socre each
   tripper<-matrix(NA,nrow=rep,ncol=14)
   tripper<-as.data.frame(tripper)
+  # use the data.frame setting, more convinient know
+  tripDF<-data.frame(trip)
   for(i in 1:rep){
-    # use the data.frame setting, more convinient know
-    tripDF<-data.frame(trip)
     # this is sampling randomly a user 
     RandUser<-sample(x=fb$id,size=1)
     # random select a row of the hotel matrix
@@ -41,9 +41,19 @@ funTripper<-function(trip,rep=1000){
 ##### AAAA THIS FUNCTION MUST BE RAN BEFORE THE PERSONALITY PART 
 ##### IT CREATES THE USER TO BE CHECKED
 
-funTesterG <- function(trip){
-  TestUsers
+funTesterG <- function(trip,rep=10){
+  TestUsers <- matrix(NA,nrow=rep,ncol=12)
+  TestUsers <- as.data.frame(TestUsers)
   tripDF<-data.frame(trip)
+  for(i in 1:rep){
+    # this is sampling randomly a user 
+    RandUser<-sample(x=fb$id,size=1)
+    # random select a row of the hotel matrix
+    tripper[i,1]<-as.character(RandUser) # random user saved in the output
+    tripper[i,2:12]<-t(apply(tripDF[hotel,6:16],1,shuffler)) # Shuffler function applied to the hotel data 
+    # set the names to the new data frame
+    setnames(tripper,c("User","Hotel","VaCode",names(tripDF[,6:16])))
+  }
   # this is sampling randomly a user 
   RandUser<-sample(x=fb$id,size=10)
   # random select a row of the hotel matrix
