@@ -151,9 +151,9 @@ tripper <- funTripper(trip)
 #suggestion(price=1)
 
 shinyServer(function(input,output){
-  output$user<-renderTable({
-    testUser
-  })
+       output$user<-renderPrint({
+         as.character(testUser[1])
+      })
   output$tripper<-renderTable({
     
     head(tripper)
