@@ -41,10 +41,11 @@ funTripper<-function(trip,rep=1000){
 ##### AAAA THIS FUNCTION MUST BE RAN BEFORE THE PERSONALITY PART 
 ##### IT CREATES THE USER TO BE CHECKED
 
-funTester <- function(trip){
+funTesterG <- function(trip){
+  TestUsers
   tripDF<-data.frame(trip)
   # this is sampling randomly a user 
-  RandUser<-sample(x=fb$id,size=1)
+  RandUser<-sample(x=fb$id,size=10)
   # random select a row of the hotel matrix
   hotel <- sample(x=1:dim(trip)[1],1) 
   # save in test
