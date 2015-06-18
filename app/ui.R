@@ -4,5 +4,6 @@ shinyUI(
     titlePanel("Boxplots about the events"),
     sidebarLayout(
       sidebarPanel("caption"),
-    mainPanel("caption")
+    mainPanel(tableOutput("user"),
+              tableOutput("tripper"))
 )))

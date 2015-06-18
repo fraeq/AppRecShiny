@@ -158,3 +158,5 @@ scoreTrip <- tripScore(tripper)
 finCor<-finalCor(wF=1,wT=10)
 
 suggestion(price=1)
+#save the data for the shiny app
+#save(list=c("fb","trip"),file="data.Rdata")
