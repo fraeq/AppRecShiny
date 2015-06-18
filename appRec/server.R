@@ -1,6 +1,6 @@
 # load the required libraries
 library(shiny)
-
+rm(list=ls())
 library(data.table)
 
 load("data.Rdata")
@@ -135,8 +135,6 @@ suggestion <- function(CorMat=finCor,price=testUser[12],num=5){
 
 
 # random user as comparison
-testUser <- funTesterG(trip)
-
 # create the score for the personality 
 #scoreFb<-fbScore(fb)[[1]]
 
@@ -144,19 +142,23 @@ testUser <- funTesterG(trip)
 tripper <- funTripper(trip)
 # create the score for the trips
 #scoreTrip <- tripScore(tripper)
-
+testUser <- funTesterG(trip)
+user<-testUser[,1]
 
 #finCor<-finalCor(wF=1,wT=10)
-
 
 #suggestion(price=1)
 
 shinyServer(function(input,output){
-       output$user<-renderPrint({
-         as.character(testUser[1])
-      })
+
+  output$userC<-renderText({
+    testUser[input$userC,1]
+  })
+  
   output$tripper<-renderTable({
-    
-    head(tripper)
+     head(tripper)
+  })
+  output$user<-renderTable({
+    testUser
   })
 })
