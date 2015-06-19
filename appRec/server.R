@@ -1,7 +1,10 @@
 # load the required libraries
 library(shiny)
 rm(list=ls())
+#library(devtools)
+#devtools::install_github(repo="cran/bit64")
 library(data.table)
+library(bit64)
 
 load("data.Rdata")
 #create the function to associate to the useres a trip randomly choosen

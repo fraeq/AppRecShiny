@@ -5,6 +5,7 @@ shinyUI(
     sidebarLayout(
       sidebarPanel(
         h2("Personal Characteristics"),
+        # the chance to select wich user to test about
         selectInput("userC","Choose the user for a recommendation:",
                     list("User1"="1",
                          "User2"="2",
