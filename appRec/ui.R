@@ -17,7 +17,8 @@ shinyUI(
                          "User9"="9",
                          "User10"="10")),
         textOutput("userC"),
-        h3("Preferences for the vacation")
+        h3("Preferences for the vacation"),
+        numericInput(inputId="NatCityUser",value=sample(x=1:3,size=1),label="How much are you interested in staying in a City",min=0,max=3,step=1)
         ),
     mainPanel(
       tableOutput("tripper"),
