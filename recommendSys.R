@@ -17,7 +17,8 @@ fb <- fread("facebook.csv")
 setnames(fb,c("id","category","page","date","pageId"))
 # load the Hotel data 
 trip<-fread("tripscore.csv")
-
+# load the random user names assign to the neames a user
+userNames <- data.table(User=unique(fb$id),Name=fread("names.csv",sep="\n")$Names)
 #create the function to associate to the useres a trip randomly choosen
 ### this function modifies lightly the preferences from what the hotel is offering
 shuffler  <- function(x){
@@ -163,5 +164,5 @@ finCor<-finalCor(wF=100,wT=100)
 
 suggestion(price=3)
 #save the data for the shiny app
-#save(list=c("fb","trip"),file="data.Rdata")
+save(list=c("fb","trip","userNames"),file="data.Rdata")
 
