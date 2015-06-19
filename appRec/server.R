@@ -53,7 +53,7 @@ funTesterG <- function(trip,rep=10){
     RandUser<-sample(x=fb$id,size=1)
     # random select a row of the hotel matrix
     hotel <- sample(x=1:dim(trip)[1],1) 
-    TestUsers[i,1]<-as.character(RandUser) # random user saved in the output
+    TestUsers[i,1]<-RandUser # random user saved in the output
     TestUsers[i,2:12]<-t(apply(tripDF[hotel,6:16],1,shuffler)) # Shuffler function applied to the hotel data 
     }
   # set the names to the new data frame
@@ -152,10 +152,20 @@ user<-testUser[,1]
 
 #suggestion(price=1)
 
-shinyServer(function(input,output){
-
+shinyServer(function(input,output,session){
+ 
+  observe({
+    setkey(userNames,User)
+  updateSelectInput(session,"userC",choices=userNames[funTesterG(trip),Name])  
+    
+  })
+#   output$user<-renderText({
+#     testUser[1,1]
+#   })
+#   
   output$userC<-renderText({
-    testUser[input$userC,1]
+    setkey(userNames,Name)
+   paste("The User code is: ",userNames[input$userC,User])
   })
   
   output$tripper<-renderTable({
