@@ -1,5 +1,6 @@
 # load the required libraries
 library(shiny)
+
 rm(list=ls())
 #library(devtools)
 #devtools::install_github(repo="cran/bit64")
@@ -7,6 +8,7 @@ library(data.table)
 library(bit64)
 
 load("data.Rdata")
+userNames$User<-as.character(userNames$User)
 #create the function to associate to the useres a trip randomly choosen
 ### this function modifies lightly the preferences from what the hotel is offering
 shuffler  <- function(x,std=1){
@@ -50,7 +52,7 @@ funTesterG <- function(trip,rep=10){
   tripDF<-data.frame(trip)
   for(i in 1:rep){
     # this is sampling randomly a user 
-    RandUser<-sample(x=fb$id,size=1)
+    RandUser<-as.character(sample(x=fb$id,size=1))
     # random select a row of the hotel matrix
     hotel <- sample(x=1:dim(trip)[1],1) 
     TestUsers[i,1]<-RandUser # random user saved in the output
@@ -58,7 +60,9 @@ funTesterG <- function(trip,rep=10){
     }
   # set the names to the new data frame
   setnames(TestUsers,c("User",names(tripDF[,6:16])))
-  return(TestUsers)
+  TestUsers<-data.table(TestUsers)
+  setkey(userNames,User)
+  return(userNames[TestUsers])
 }
 
 ###################################################################################################
@@ -153,10 +157,11 @@ user<-testUser[,1]
 #suggestion(price=1)
 
 shinyServer(function(input,output,session){
- 
+  k<-funTesterG(trip)
   observe({
     setkey(userNames,User)
-  updateSelectInput(session,"userC",choices=userNames[funTesterG(trip),Name])  
+   
+  updateSelectInput(session,"userC",choices=userNames[k,Name])  
     
   })
 #   output$user<-renderText({
@@ -172,6 +177,6 @@ shinyServer(function(input,output,session){
      head(tripper)
   })
   output$user<-renderTable({
-    testUser
+    k
   })
 })
