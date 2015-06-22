@@ -158,16 +158,63 @@ user<-testUser[,1]
 
 shinyServer(function(input,output,session){
   k<-funTesterG(trip)
-  observe({
-    setkey(userNames,User)
-   
-  updateSelectInput(session,"userC",choices=userNames[k,Name])  
-    
-  })
-#   output$user<-renderText({
-#     testUser[1,1]
+# function selecting which kind of user is to be selected 
+  whichUser<-reactive({
+    kind<-input$UserKindVar
+   # return(kind)
+    })
+
+  #working check of the input variable
+#   output$UserKind<-renderText({
+#     whichUser()
 #   })
 #   
+  
+  observe({
+    setkey(userNames,User)
+    updateSelectInput(session,"userC",choices=userNames[k,Name])  
+    })
+  
+   observe({
+     if(input$UserKindVar==1){
+ updateSliderInput(session,"NatCityUser",value=1)
+ updateSliderInput(session,"NatMountUser",value=1)
+ updateSliderInput(session,"NatSeaUser",value=1)
+ updateSliderInput(session,"EntClubUser",value=1)
+ updateSliderInput(session,"EntKidUser",value=1)
+ updateSliderInput(session,"EntRomUser",value=1)
+ updateSliderInput(session,"ActSpoUser",value=1)
+ updateSliderInput(session,"ActShoUser",value=1)
+ updateSliderInput(session,"ActCulUse",value=1)
+ updateSliderInput(session,"ActAdvUser",value=1)
+     }
+ else if(input$UserKindVar==2){
+   updateSliderInput(session,"NatCityUser",value=2)
+   updateSliderInput(session,"NatMountUser",value=2)
+   updateSliderInput(session,"NatSeaUser",value=2)
+   updateSliderInput(session,"EntClubUser",value=2)
+   updateSliderInput(session,"EntKidUser",value=2)
+   updateSliderInput(session,"EntRomUser",value=2)
+   updateSliderInput(session,"ActSpoUser",value=2)
+   updateSliderInput(session,"ActShoUser",value=2)
+   updateSliderInput(session,"ActCulUse",value=2)
+   updateSliderInput(session,"ActAdvUser",value=2)
+ }
+ else{
+   updateSliderInput(session,"NatCityUser",value=3)
+   updateSliderInput(session,"NatMountUser",value=3)
+   updateSliderInput(session,"NatSeaUser",value=3)
+   updateSliderInput(session,"EntClubUser",value=3)
+   updateSliderInput(session,"EntKidUser",value=3)
+   updateSliderInput(session,"EntRomUser",value=3)
+   updateSliderInput(session,"ActSpoUser",value=3)
+   updateSliderInput(session,"ActShoUser",value=3)
+   updateSliderInput(session,"ActCulUse",value=3)
+   updateSliderInput(session,"ActAdvUser",value=3)
+ }
+  })
+#   
+  
   output$userC<-renderText({
     setkey(userNames,Name)
    paste("The User code is: ",userNames[input$userC,User])
