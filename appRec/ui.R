@@ -4,6 +4,8 @@ shinyUI(
     titlePanel("Vanza Recommender System"),
     sidebarLayout(
       sidebarPanel(
+        tabsetPanel(
+          tabPanel("Macro Class",
         h2("Personal Characteristics"),
         #actionButton(inputId="shuffle",label="start"),
         # the chance to select wich user to test about
@@ -18,7 +20,8 @@ shinyUI(
                                   "All 2"=2,
                                   "All 3"=3),
                      selected=1,inline=T),
-        textOutput("UserKind"),
+        textOutput("UserKind")),
+        tabPanel("Tuning",
         h4("Desired Environment"),
         sliderInput(inputId="NatCityUser",label="How much are you interested in staying in a city",min=0,max=3,value="",step=1,round=T,width="50%"),
         sliderInput(inputId="NatMountUser",label="How much are you interested in staying in the mountains",min=0,max=3,value="",step=1,round=T,width="50%"),
@@ -32,7 +35,8 @@ shinyUI(
         sliderInput(inputId="ActShoUser",label="How much are you interested in Shopping",min=0,max=3,value="",step=1,round=T,width="50%"),
         sliderInput(inputId="ActCulUse",label="How much are you interested in Cultural Stuff",min=0,max=3,value="",step=1,round=T,width="50%"),
         sliderInput(inputId="ActAdvUser",label="How much are you interested in Adventure",min=0,max=3,value="",step=1,round=T,width="50%")
-        ),
+        )
+        )),
     mainPanel(
       tableOutput("tripper"),
       tableOutput("user"))
