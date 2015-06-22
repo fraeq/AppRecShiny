@@ -71,15 +71,14 @@ funTesterG <- function(trip,rep=10){
 
 # function to compute the correlation with a randomly given user
 fbScore<-function(fb,test=testUser){
+  options(warn=-1)
   #create a tabele with as rows the users and as colomns the categories of pages likes
   tab<-table(id=fb$id,cat=fb$category)
   # this is the user sampled in the previous section
   k<-which(test[1]==attr(tab,"dimnames")$id)
   # use the user choose in the travel section
   #function for computing the score, input K=row numbmer of the user to be compared and facebook data
-  score<-data.table(User=attr(tab[-k,],"dimnames")$id,
-                    FBcor=apply(tab[-k,],1,function(x)cor(x,tab[k,]))
-  )
+  score<-data.table(User=attr(tab[-k,],"dimnames")$id,FBcor=apply(tab[-k,],1,function(x)cor(x,tab[k,])))
   # sorting the data
   score<-score[,,][order(-FBcor)]
   #return(list(score,attr(tab,"dimnames")$id[k]))
@@ -98,7 +97,7 @@ tripScore <- function(tripper,test=testUser){
                       Hotel=tripper$Hotel,
                       Price=tripper$price,
                       # this function computes the correlation between the preferences, doesent consider the price. the ifelse takes into account the 0 correlated records
-                      Tripcor=apply(tripper[,-c(1:3,14)],1,function(x)ifelse(test=is.na(cor(x,test[-c(1,12)],method="spea"))==F,yes=cor(x,test[-c(1,12)],method="spea"),no=0))
+                      Tripcor=apply(tripper[,-c(1:3,14)],MARGIN=1,function(x)ifelse(test=is.na(cor(x,test,method="spea"))==F,yes=cor(x,test,method="spea"),no=0))
   ) 
   # group by user the results and order it with decreasing correlation
   score <- score[,,by=User][order(User,-Tripcor)]
@@ -109,9 +108,9 @@ tripScore <- function(tripper,test=testUser){
 
 #### function to create a global score with equal weights as default. 
 
-finalCor <- function(wF=0.5,wT=0.5){
+finalCor <- function(wF=0.5,wT=0.5,scoreFb,scoreTrip){
   # activate the warning function
-  options(warn=1)
+  options(warn=-1)
   # check that the weights sum up to one, if they don't warn and rescale
   if(wF+wT!=1){ tot <- (wF+wT)
                 wF=wF/tot
@@ -119,6 +118,8 @@ finalCor <- function(wF=0.5,wT=0.5){
                 #print(wF);print(wT)
                 warning("The Weights have been rescaled",call.=F)
   }
+  scoreFb <- data.table(scoreFb)
+  scoreTrip <- data.table(scoreTrip)
   # set the database key for the table
   setkey(x=scoreFb,User)
   # match the correlations based on the score
@@ -137,7 +138,9 @@ suggestion <- function(CorMat=finCor,price=testUser[12],num=5){
   Choice <- CorMat[Price==price,.(unique(Hotel)),][1:num]
   # set the data base key in order to find the code and name of the hotel suggested 
   setkey(trip,hotel)
-  return(trip[Code==Choice,.(Code,hotel)])
+  return(trip[Code==Choice$V1,.(Code,hotel,City=NatCity,Mountain=NatMount,
+                                Sea=NatSea,Clubbing=EntClub,Kid=EntKid,Romantic=EntRom,
+                                Sport=ActSpo,Shopping=ActSho,Cultural=ActCul,Adventure=ActAdv)])
 }
 
 
@@ -147,17 +150,25 @@ suggestion <- function(CorMat=finCor,price=testUser[12],num=5){
 
 # create the travel data
 tripper <- funTripper(trip)
-# create the score for the trips
-#scoreTrip <- tripScore(tripper)
+
+
 testUser <- funTesterG(trip)
 user<-testUser[,1]
 
-#finCor<-finalCor(wF=1,wT=10)
+#finCor<-finalCor(wF=1,wT=10,scoreFb=scoreFB,scoreTrip)
 
 #suggestion(price=1)
 
 shinyServer(function(input,output,session){
+  
   k<-funTesterG(trip)
+  
+#   NatCityUser<-reactive({
+#   ifelse(test=input$UserKindVar==3,1,ifelse(input$UserKindVar==2,2,3))
+#   })
+#   output$NatCityUser<-renderText({
+#     NatCityUser()
+#   })
 # function selecting which kind of user is to be selected 
   whichUser<-reactive({
     kind<-input$UserKindVar
@@ -169,61 +180,151 @@ shinyServer(function(input,output,session){
 #     whichUser()
 #   })
 #   
-  
+
+# update the values of the user choice
   observe({
     setkey(userNames,User)
     updateSelectInput(session,"userC",choices=userNames[k,Name])  
     })
-  
+
+
+
+# create the variables with the values
+profile<-reactive({
+if(input$UserKindVar==1){
+  NatCityUser <- 0
+  NatMountUser <- 3
+  NatSeaUser <- 0
+  EntClubUser <- 1
+  EntKidUser <- 0
+  EntRomUser <- 3
+  ActSpoUser <- 1
+  ActShoUser <- 3
+  ActCulUser <- 3
+  ActAdvUser <- 1
+  }
+else if(input$UserKindVar==2){
+  NatCityUser <- 3
+  NatMountUser <- 1
+  NatSeaUser <- 3
+  EntClubUser <- 0
+  EntKidUser <- 3
+  EntRomUser <- 1
+  ActSpoUser <- 2
+  ActShoUser <- 3
+  ActCulUser <- 3
+  ActAdvUser <- 0
+}
+else{
+  NatCityUser <- 3
+  NatMountUser <- 0
+  NatSeaUser <- 3
+  EntClubUser <- 3
+  EntKidUser <- 0
+  EntRomUser <- 0
+  ActSpoUser <- 2
+  ActShoUser <- 1
+  ActCulUser <- 1
+  ActAdvUser <- 3
+}
+c(NatCityUser,NatMountUser,NatSeaUser,EntClubUser,EntKidUser,EntRomUser,ActSpoUser,ActShoUser,ActCulUser,ActAdvUser)
+})
+ # functoin that given a choice for kind of user tunes all the parameters  
    observe({
      if(input$UserKindVar==1){
- updateSliderInput(session,"NatCityUser",value=1)
- updateSliderInput(session,"NatMountUser",value=1)
- updateSliderInput(session,"NatSeaUser",value=1)
- updateSliderInput(session,"EntClubUser",value=1)
- updateSliderInput(session,"EntKidUser",value=1)
- updateSliderInput(session,"EntRomUser",value=1)
- updateSliderInput(session,"ActSpoUser",value=1)
- updateSliderInput(session,"ActShoUser",value=1)
- updateSliderInput(session,"ActCulUse",value=1)
- updateSliderInput(session,"ActAdvUser",value=1)
-     }
- else if(input$UserKindVar==2){
-   updateSliderInput(session,"NatCityUser",value=2)
-   updateSliderInput(session,"NatMountUser",value=2)
-   updateSliderInput(session,"NatSeaUser",value=2)
-   updateSliderInput(session,"EntClubUser",value=2)
-   updateSliderInput(session,"EntKidUser",value=2)
-   updateSliderInput(session,"EntRomUser",value=2)
-   updateSliderInput(session,"ActSpoUser",value=2)
-   updateSliderInput(session,"ActShoUser",value=2)
-   updateSliderInput(session,"ActCulUse",value=2)
-   updateSliderInput(session,"ActAdvUser",value=2)
+updateSliderInput(session,"NatCityUser",value=profile()[1])
+updateSliderInput(session,"NatMountUser",value=profile()[2])
+updateSliderInput(session,"NatSeaUser",value=profile()[3])
+updateSliderInput(session,"EntClubUser",value=profile()[4])
+updateSliderInput(session,"EntKidUser",value=profile()[5])
+updateSliderInput(session,"EntRomUser",value=profile()[6])
+updateSliderInput(session,"ActSpoUser",value=profile()[7])
+updateSliderInput(session,"ActShoUser",value=profile()[8])
+updateSliderInput(session,"ActCulUser",value=profile()[9])
+updateSliderInput(session,"ActAdvUser",value=profile()[10])
+}
+    else if(input$UserKindVar==2){
+     updateSliderInput(session,"NatCityUser",value=profile()[1])
+     updateSliderInput(session,"NatMountUser",value=profile()[2])
+     updateSliderInput(session,"NatSeaUser",value=profile()[3])
+     updateSliderInput(session,"EntClubUser",value=profile()[4])
+     updateSliderInput(session,"EntKidUser",value=profile()[5])
+     updateSliderInput(session,"EntRomUser",value=profile()[6])
+     updateSliderInput(session,"ActSpoUser",value=profile()[7])
+     updateSliderInput(session,"ActShoUser",value=profile()[8])
+     updateSliderInput(session,"ActCulUser",value=profile()[9])
+     updateSliderInput(session,"ActAdvUser",value=profile()[10])
+   }
+    else{
+  updateSliderInput(session,"NatCityUser",value=profile()[1])
+   updateSliderInput(session,"NatMountUser",value=profile()[2])
+   updateSliderInput(session,"NatSeaUser",value=profile()[3])
+   updateSliderInput(session,"EntClubUser",value=profile()[4])
+   updateSliderInput(session,"EntKidUser",value=profile()[5])
+   updateSliderInput(session,"EntRomUser",value=profile()[6])
+   updateSliderInput(session,"ActSpoUser",value=profile()[7])
+   updateSliderInput(session,"ActShoUser",value=profile()[8])
+   updateSliderInput(session,"ActCulUser",value=profile()[9])
+   updateSliderInput(session,"ActAdvUser",value=profile()[10])
  }
- else{
-   updateSliderInput(session,"NatCityUser",value=3)
-   updateSliderInput(session,"NatMountUser",value=3)
-   updateSliderInput(session,"NatSeaUser",value=3)
-   updateSliderInput(session,"EntClubUser",value=3)
-   updateSliderInput(session,"EntKidUser",value=3)
-   updateSliderInput(session,"EntRomUser",value=3)
-   updateSliderInput(session,"ActSpoUser",value=3)
-   updateSliderInput(session,"ActShoUser",value=3)
-   updateSliderInput(session,"ActCulUse",value=3)
-   updateSliderInput(session,"ActAdvUser",value=3)
- }
-  })
-#   
+})
   
+
+
+# User code    
   output$userC<-renderText({
     setkey(userNames,Name)
    paste("The User code is: ",userNames[input$userC,User])
   })
-  
+# table for check  
   output$tripper<-renderTable({
      head(tripper)
   })
-  output$user<-renderTable({
-    k
-  })
+# obtaining the inserted info (check it is possible to do it in reactive table)
+
+
+# summary of the choosen profile
+output$profile<-renderTable({
+      data.table(Name=userNames[input$userC,Name],
+            Code=userNames[input$userC,User],
+            City=input$NatCityUser,
+            Mountains=input$NatMountUser,
+            Sea=input$NatSeaUser,
+            Clubbing=input$EntClubUser,
+            Kid=input$EntKidUser,
+            Romantic=input$EntRomUser,
+            Sport=input$ActSpoUser,
+            Shopping=input$ActShoUser,
+            Culture=input$ActCulUser,
+            Adventure=input$ActAdvUser
+               )
+            })
+#   output$user<-renderTable({
+#     k
+#   })
+# output$fbscore<-renderTable({
+#   head(fbScore(fb,userNames[input$userC,User])[[1]])
+# })
+
+# output$fbscore<-renderTable({
+# scoreFb <- head(fbScore(fb,userNames[input$userC,User])[[1]])
+# })
+
+
+userPref<-reactive(c(input$NatCityUser,input$NatMountUser,input$NatSeaUser,input$EntClubUser,input$EntKidUser,input$EntRomUser,input$ActSpoUser,input$ActShoUser,input$ActCulUser,input$ActAdvUser))
+
+# output$tripscore<-renderTable({
+# scoreTrip <- head(tripScore(tripper=tripper,test=userPref()))
+# })
+
+#  output$fbscore<-renderTable({
+# # #   fbScore(fb,userNames[input$userC,User])[[2]]
+# finalCorUs <- finalCor(wF=1,wT=10,scoreFb,scoreTrip)
+# # # 
+#     })
+# finalCorUs <- finalCor(wF=10,wT=5,scoreFb,scoreTrip)
+output$suggestion<-renderTable({
+suggestion(CorMat=finalCor(wF=input$wFb,wT=input$wTr,fbScore(fb,userNames[input$userC,User])[[1]],
+                           tripScore(tripper=tripper,test=userPref())),price=input$PriceUser,num=input$numCh)
+})
 })
