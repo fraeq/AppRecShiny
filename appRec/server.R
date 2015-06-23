@@ -359,29 +359,9 @@ head(tripper)
 # # # 
 #     })
 # finalCorUs <- finalCor(wF=10,wT=5,scoreFb,scoreTrip)
-output$suggestion<-renderTable({
-suggestion(CorMat=finalCor(wF=input$wFb,wT=input$wTr,fbScore(fb,userNames[input$userC,User])[[1]],
-                           tripScore(tripper=tripper,test=userPref())),price=input$PriceUser,num=input$numCh)
-})
-
-# lapply(trip[Code==Choice$V1,.(hotel)],function(x){
-#   output[[paste0("suggestion",x)]]<-renderUI({
-#     strong(paste0("The sueggestion is:",x))
-#   })
-# })
-
-# for(i in 1:10){
-#  output[[paste0("suggestion",i)]]<-renderUI({
-#    strong(paste0("The suggestion is",
-#    suggestion(CorMat=finalCor(wF=input$wFb,wT=input$wTr,fbScore(fb,userNames[input$userC,User])[[1]],
-#    tripScore(tripper=tripper,test=userPref())),price=input$PriceUser,num=input$numCh)[,hotel]
-#    ))
-#    })
-# }
+#})
 output$sug2 <- renderUI({
-  sugH<-suggestion(CorMat=finalCor(wF=input$wFb,wT=input$wTr,fbScore(fb,userNames[input$userC,User])[[1]],
-                             tripScore(tripper=tripper,test=userPref())),price=input$PriceUser,num=input$numCh)[,.(hotel,Text,Cat,City,Mountain,Sea,Clubbing,Kid,Romantic,Sport,Shopping,Cultural,Adventure)]
-  
+  sugH<-suggestion(CorMat=finalCor(wF=input$wFb,wT=input$wTr,fbScore(fb,userNames[input$userC,User])[[1]],tripScore(tripper=tripper,test=userPref())),price=input$PriceUser,num=input$numCh)[,.(hotel,Text,Cat,City,Mountain,Sea,Clubbing,Kid,Romantic,Sport,Shopping,Cultural,Adventure)] 
   theHTML <- ""
   for(i in 1:input$numCh){
     suggestionHTML <- paste0("<div class=\"panel panel-default\">
@@ -397,7 +377,6 @@ output$sug2 <- renderUI({
                                       <div class=\"progress-bar progress-bar-success\" style=\"width:",sugH[i,City]/9*100,"%\">
                                         City: ",sugH[i,City],"
                                       </div>
-
                                       <div class=\"progress-bar progress-bar-warning \" style=\"width:",sugH[i,Mountain]/9*100,"%\">
                                          Mountain: ",sugH[i,Mountain],"
                                       </div>
@@ -439,17 +418,6 @@ output$sug2 <- renderUI({
                                </div>")
     theHTML  <-  paste0(theHTML, suggestionHTML)
   }
-  
   return(HTML(theHTML))
-})
-
-    
-   
-#})
-
-
-#tropper <- observe(funTripperRep(trip,std=input$variability))
-#  tripper <- eventReactive(input$computeTravel,{
-#   data.table(funTripper(trip))
-# })
+  })
 })
