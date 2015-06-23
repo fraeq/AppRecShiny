@@ -21,9 +21,9 @@ trip<-fread("tripscore.csv")
 userNames <- data.table(User=unique(fb$id),Name=fread("names.csv",sep="\n")$Names)
 #create the function to associate to the useres a trip randomly choosen
 ### this function modifies lightly the preferences from what the hotel is offering
-shuffler  <- function(x){
+shuffler  <- function(x,std=1){
   # the hotel value for each feature is added by a random discrete Value
-  x <-x+ round(rnorm(n=1,mean=0,sd=1),0)
+  x <-x+ round(rnorm(n=1,mean=0,sd=std),0)
   # test if the score is included in the proper values {0,1,2,3}
   x<-ifelse(test=x > 0 & x < 3,yes=x,no=ifelse(test=x<0,yes=0,no=3))
   return(x)
@@ -45,7 +45,7 @@ funTripper<-function(trip,rep=1000){
     tripper[i,1]<-as.character(RandUser) # random user saved in the output
     tripper[i,2]<-hotel # random hotel saved in the output
     tripper[i,3]<-i # index, indicating the VaCode  
-    tripper[i,4:14]<-t(apply(tripDF[hotel,6:16],1,shuffler)) # Shuffler function applied to the hotel data 
+    tripper[i,4:14]<-t(apply(tripDF[hotel,6:16],1,shuffler,std=2)) # Shuffler function applied to the hotel data 
     # set the names to the new data frame
     setnames(tripper,c("User","Hotel","VaCode",names(tripDF[,6:16])))
   }

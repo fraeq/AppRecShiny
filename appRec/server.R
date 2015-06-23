@@ -1,6 +1,6 @@
 # load the required libraries
 library(shiny)
-
+Sys.setlocale("LC_ALL",'C')
 rm(list=ls())
 #library(devtools)
 #devtools::install_github(repo="cran/bit64")
@@ -11,7 +11,7 @@ load("data.Rdata")
 userNames$User<-as.character(userNames$User)
 #create the function to associate to the useres a trip randomly choosen
 ### this function modifies lightly the preferences from what the hotel is offering
-shuffler  <- function(x,std=1){
+shuffler  <- function(x,std=0.25){
   # the hotel value for each feature is added by a random discrete Value
   x <-x+ round(rnorm(n=1,mean=0,sd=std),0)
   # test if the score is included in the proper values {0,1,2,3}
@@ -41,6 +41,30 @@ funTripper<-function(trip,rep=1000){
   }
   return(tripper)
 }
+
+# this function creates the dataset with User VaCode (Unique code for every vacation) Preferences and hotel choosen
+funTripperRep<-function(trip,rep=1000,std=1){
+  # rep defines the number of travel to create, so high becouse we have 171 people on fb and I want at least one socre each
+  tripper<-matrix(NA,nrow=rep,ncol=14)
+  tripper<-as.data.frame(tripper)
+  # use the data.frame setting, more convinient know
+  tripDF<-data.frame(trip)
+  for(i in 1:rep){
+    # this is sampling randomly a user 
+    RandUser<-sample(x=fb$id,size=1)
+    # random select a row of the hotel matrix
+    hotel <- sample(x=1:dim(trip)[1],1) 
+    # create the data set
+    tripper[i,1]<-as.character(RandUser) # random user saved in the output
+    tripper[i,2]<-hotel # random hotel saved in the output
+    tripper[i,3]<-i # index, indicating the VaCode  
+    tripper[i,4:14]<-t(apply(tripDF[hotel,6:16],1,shuffler,std)) # Shuffler function applied to the hotel data 
+    # set the names to the new data frame
+    setnames(tripper,c("User","Hotel","VaCode",names(tripDF[,6:16])))
+  }
+  return(tripper)
+}
+
 
 ### create the user to be compared 
 ##### AAAA THIS FUNCTION MUST BE RAN BEFORE THE PERSONALITY PART 
@@ -75,10 +99,10 @@ fbScore<-function(fb,test=testUser){
   #create a tabele with as rows the users and as colomns the categories of pages likes
   tab<-table(id=fb$id,cat=fb$category)
   # this is the user sampled in the previous section
-  k<-which(test[1]==attr(tab,"dimnames")$id)
+  k<-which(as.character(test[1])==attr(tab,"dimnames")$id)
   # use the user choose in the travel section
   #function for computing the score, input K=row numbmer of the user to be compared and facebook data
-  score<-data.table(User=attr(tab[-k,],"dimnames")$id,FBcor=apply(tab[-k,],1,function(x)cor(x,tab[k,])))
+  score<-data.table(User=attr(tab[-k,],"dimnames")$id,FBcor=apply(tab[-k,],1,function(x)cor(x,tab[k,],use="complete.obs",method="spea")))
   # sorting the data
   score<-score[,,][order(-FBcor)]
   #return(list(score,attr(tab,"dimnames")$id[k]))
@@ -140,7 +164,8 @@ suggestion <- function(CorMat=finCor,price=testUser[12],num=5){
   setkey(trip,hotel)
   return(trip[Code==Choice$V1,.(Code,hotel,City=NatCity,Mountain=NatMount,
                                 Sea=NatSea,Clubbing=EntClub,Kid=EntKid,Romantic=EntRom,
-                                Sport=ActSpo,Shopping=ActSho,Cultural=ActCul,Adventure=ActAdv)])
+                               Sport=ActSpo,Shopping=ActSho,Cultural=ActCul,Adventure=ActAdv,Text=text,Cat=Name)])
+
 }
 
 
@@ -149,7 +174,7 @@ suggestion <- function(CorMat=finCor,price=testUser[12],num=5){
 #scoreFb<-fbScore(fb)[[1]]
 
 # create the travel data
-tripper <- funTripper(trip)
+
 
 
 testUser <- funTesterG(trip)
@@ -160,6 +185,17 @@ user<-testUser[,1]
 #suggestion(price=1)
 
 shinyServer(function(input,output,session){
+  tripper <-funTripperRep(trip)
+  observeEvent(input$computeTravel,{cat("reco")})
+
+#   tripper<- 
+#   Retrip<-reactive({
+#     if(input$computeTravel==0) funTripper(trip)
+#     else funTripperRep(trip,std=input$variability)
+#       #funTripperRep(trip,std=input$variability)
+#   })
+#   
+# tripper <- Retrip()
   
   k<-funTesterG(trip)
   
@@ -313,9 +349,9 @@ output$profile<-renderTable({
 
 userPref<-reactive(c(input$NatCityUser,input$NatMountUser,input$NatSeaUser,input$EntClubUser,input$EntKidUser,input$EntRomUser,input$ActSpoUser,input$ActShoUser,input$ActCulUser,input$ActAdvUser))
 
-# output$tripscore<-renderTable({
-# scoreTrip <- head(tripScore(tripper=tripper,test=userPref()))
-# })
+output$tripscore<-renderTable({
+head(tripper)
+ })
 
 #  output$fbscore<-renderTable({
 # # #   fbScore(fb,userNames[input$userC,User])[[2]]
@@ -327,4 +363,93 @@ output$suggestion<-renderTable({
 suggestion(CorMat=finalCor(wF=input$wFb,wT=input$wTr,fbScore(fb,userNames[input$userC,User])[[1]],
                            tripScore(tripper=tripper,test=userPref())),price=input$PriceUser,num=input$numCh)
 })
+
+# lapply(trip[Code==Choice$V1,.(hotel)],function(x){
+#   output[[paste0("suggestion",x)]]<-renderUI({
+#     strong(paste0("The sueggestion is:",x))
+#   })
+# })
+
+# for(i in 1:10){
+#  output[[paste0("suggestion",i)]]<-renderUI({
+#    strong(paste0("The suggestion is",
+#    suggestion(CorMat=finalCor(wF=input$wFb,wT=input$wTr,fbScore(fb,userNames[input$userC,User])[[1]],
+#    tripScore(tripper=tripper,test=userPref())),price=input$PriceUser,num=input$numCh)[,hotel]
+#    ))
+#    })
+# }
+output$sug2 <- renderUI({
+  sugH<-suggestion(CorMat=finalCor(wF=input$wFb,wT=input$wTr,fbScore(fb,userNames[input$userC,User])[[1]],
+                             tripScore(tripper=tripper,test=userPref())),price=input$PriceUser,num=input$numCh)[,.(hotel,Text,Cat,City,Mountain,Sea,Clubbing,Kid,Romantic,Sport,Shopping,Cultural,Adventure)]
+  
+  theHTML <- ""
+  for(i in 1:input$numCh){
+    suggestionHTML <- paste0("<div class=\"panel panel-default\">
+                               <div class=\"panel-heading\">
+                               <h3 class=\"panel-title\">",i,") ",sugH[i,hotel],
+                                " -- ",sugH[i,Cat],
+                                "</h3>
+                               </div>
+                                 <div class=\"panel-body\">
+                              
+                                 <h4>Environment</h4>
+                                    <div class=\"progress\">
+                                      <div class=\"progress-bar progress-bar-success\" style=\"width:",sugH[i,City]/9*100,"%\">
+                                        City: ",sugH[i,City],"
+                                      </div>
+
+                                      <div class=\"progress-bar progress-bar-warning \" style=\"width:",sugH[i,Mountain]/9*100,"%\">
+                                         Mountain: ",sugH[i,Mountain],"
+                                      </div>
+                                      <div class=\"progress-bar progress-bar-danger\" style=\"width:",sugH[i,Sea]/9*100,"%\">
+                                         Sea: ",sugH[i,Sea],"
+                                      </div>
+                                    </div>
+                                <h4>Entertainment</h4>
+                                     <div class=\"progress\">
+                                        <div class=\"progress-bar progress-bar-success\" style=\"width:",sugH[i,Clubbing]/9*100,"%\">
+                                          Clubbing: ",sugH[i,Clubbing],"
+                                        </div>
+                                        <div class=\"progress-bar progress-bar-warning\" style=\"width:",sugH[i,Kid]/9*100,"%\">
+                                          Kid: ",sugH[i,Kid],"
+                                        </div>
+                                        <div class=\"progress-bar progress-bar-danger\" style=\"width:",sugH[i,Romantic]/9*100,"%\">
+                                          Romantic: ",sugH[i,Romantic],"
+                                        </div>
+                                      </div>
+                              <h4>Activity</h4>
+                                     <div class=\"progress\">
+                                        <div class=\"progress-bar progress-bar-info\" style=\"width:",sugH[i,Sport]/12*100,"%\">
+                                          Sport: ",sugH[i,Sport],"
+                                        </div>
+                                        <div class=\"progress-bar progress-bar-success \" style=\"width:",sugH[i,Shopping]/12*100,"%\">
+                                          Shopping: ",sugH[i,Shopping],"
+                                        </div>
+                                        <div class=\"progress-bar progress-bar-warning\" style=\"width:",sugH[i,Cultural]/12*100,"%\">
+                                          Cultural: ",sugH[i,Cultural],"
+                                        </div>
+                                        <div class=\"progress-bar progress-bar-danger\" style=\"width:",sugH[i,Adventure]/12*100,"%\">
+                                          Adventure: ",sugH[i,Adventure],"
+                                        </div>
+                                      </div>
+                                
+                           
+                               ",tags$div(sugH[i,Text]),"
+                             </div>
+                               </div>")
+    theHTML  <-  paste0(theHTML, suggestionHTML)
+  }
+  
+  return(HTML(theHTML))
+})
+
+    
+   
+#})
+
+
+#tropper <- observe(funTripperRep(trip,std=input$variability))
+#  tripper <- eventReactive(input$computeTravel,{
+#   data.table(funTripper(trip))
+# })
 })
