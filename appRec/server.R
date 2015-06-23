@@ -308,58 +308,31 @@ updateSliderInput(session,"ActAdvUser",value=profile()[10])
 
 
 # User code    
-  output$userC<-renderText({
-    setkey(userNames,Name)
-   paste("The User code is: ",userNames[input$userC,User])
-  })
-# table for check  
-  output$tripper<-renderTable({
-     head(tripper)
-  })
-# obtaining the inserted info (check it is possible to do it in reactive table)
-
-
-# summary of the choosen profile
-output$profile<-renderTable({
-      data.table(Name=userNames[input$userC,Name],
-            Code=userNames[input$userC,User],
-            City=input$NatCityUser,
-            Mountains=input$NatMountUser,
-            Sea=input$NatSeaUser,
-            Clubbing=input$EntClubUser,
-            Kid=input$EntKidUser,
-            Romantic=input$EntRomUser,
-            Sport=input$ActSpoUser,
-            Shopping=input$ActShoUser,
-            Culture=input$ActCulUser,
-            Adventure=input$ActAdvUser
-               )
-            })
-#   output$user<-renderTable({
-#     k
-#   })
-# output$fbscore<-renderTable({
-#   head(fbScore(fb,userNames[input$userC,User])[[1]])
-# })
-
-# output$fbscore<-renderTable({
-# scoreFb <- head(fbScore(fb,userNames[input$userC,User])[[1]])
+output$userC<-renderText({
+  setkey(userNames,Name)
+  paste("The User code is: ",userNames[input$userC,User])
+})
+  
+# # summary of the choosen profile
+# output$profile<-renderTable({
+#   data.table(Name=userNames[input$userC,Name],
+#    Code=userNames[input$userC,User],
+#    City=input$NatCityUser,
+#    Mountains=input$NatMountUser,
+#    Sea=input$NatSeaUser,
+#    Clubbing=input$EntClubUser,
+#    Kid=input$EntKidUser,
+#    Romantic=input$EntRomUser,
+#    Sport=input$ActSpoUser,
+#    Shopping=input$ActShoUser,
+#    Culture=input$ActCulUser,
+#    Adventure=input$ActAdvUser
+#   )
 # })
 
 
 userPref<-reactive(c(input$NatCityUser,input$NatMountUser,input$NatSeaUser,input$EntClubUser,input$EntKidUser,input$EntRomUser,input$ActSpoUser,input$ActShoUser,input$ActCulUser,input$ActAdvUser))
 
-output$tripscore<-renderTable({
-head(tripper)
- })
-
-#  output$fbscore<-renderTable({
-# # #   fbScore(fb,userNames[input$userC,User])[[2]]
-# finalCorUs <- finalCor(wF=1,wT=10,scoreFb,scoreTrip)
-# # # 
-#     })
-# finalCorUs <- finalCor(wF=10,wT=5,scoreFb,scoreTrip)
-#})
 output$sug2 <- renderUI({
   sugH<-suggestion(CorMat=finalCor(wF=input$wFb,wT=input$wTr,fbScore(fb,userNames[input$userC,User])[[1]],tripScore(tripper=tripper,test=userPref())),price=input$PriceUser,num=input$numCh)[,.(hotel,Text,Cat,City,Mountain,Sea,Clubbing,Kid,Romantic,Sport,Shopping,Cultural,Adventure)] 
   theHTML <- ""
