@@ -20,7 +20,7 @@ shuffler  <- function(x,std=0.25){
 }
 
 # this function creates the dataset with User VaCode (Unique code for every vacation) Preferences and hotel choosen
-funTripper<-function(trip,rep=1000){
+funTripper<-function(trip,rep=1500){
   # rep defines the number of travel to create, so high becouse we have 171 people on fb and I want at least one socre each
   tripper<-matrix(NA,nrow=rep,ncol=14)
   tripper<-as.data.frame(tripper)
@@ -339,7 +339,7 @@ output$sug2 <- renderUI({
   for(i in 1:input$numCh){
     suggestionHTML <- paste0("<div class=\"panel panel-default\">
                                <div class=\"panel-heading\">
-                               <h3 class=\"panel-title\">",i,") ",sugH[i,hotel],
+                               <h3 class=\"panel-title\">",i,"#  ",sugH[i,hotel],
                                 " -- ",sugH[i,Cat],
                                 "</h3>
                                </div>
@@ -347,40 +347,40 @@ output$sug2 <- renderUI({
                               
                                  <h4>Environment</h4>
                                     <div class=\"progress\">
-                                      <div class=\"progress-bar progress-bar-success\" style=\"width:",sugH[i,City]/9*100,"%\">
+                                      <div class=\"progress-bar progress-bar-warning\" style=\"width:",sugH[i,City]/sum(sugH[i,City]+sugH[i,Mountain]+sugH[i,Sea])*100,"%\">
                                         City: ",sugH[i,City],"
                                       </div>
-                                      <div class=\"progress-bar progress-bar-warning \" style=\"width:",sugH[i,Mountain]/9*100,"%\">
+                                      <div class=\"progress-bar progress-bar-success \" style=\"width:",sugH[i,Mountain]/sum(sugH[i,City]+sugH[i,Mountain]+sugH[i,Sea])*100,"%\">
                                          Mountain: ",sugH[i,Mountain],"
                                       </div>
-                                      <div class=\"progress-bar progress-bar-danger\" style=\"width:",sugH[i,Sea]/9*100,"%\">
+                                      <div class=\"progress-bar progress-bar-info\" style=\"width:",sugH[i,Sea]/sum(sugH[i,City]+sugH[i,Mountain]+sugH[i,Sea])*100,"%\">
                                          Sea: ",sugH[i,Sea],"
                                       </div>
                                     </div>
                                 <h4>Entertainment</h4>
                                      <div class=\"progress\">
-                                        <div class=\"progress-bar progress-bar-success\" style=\"width:",sugH[i,Clubbing]/9*100,"%\">
+                                        <div class=\"progress-bar progress-bar-warning\" style=\"width:",sugH[i,Clubbing]/sum(sugH[i,Clubbing]+sugH[i,Kid]+sugH[i,Romantic])*100,"%\">
                                           Clubbing: ",sugH[i,Clubbing],"
                                         </div>
-                                        <div class=\"progress-bar progress-bar-warning\" style=\"width:",sugH[i,Kid]/9*100,"%\">
+                                        <div class=\"progress-bar progress-bar-success\" style=\"width:",sugH[i,Kid]/sum(sugH[i,Clubbing]+sugH[i,Kid]+sugH[i,Romantic])*100,"%\">
                                           Kid: ",sugH[i,Kid],"
                                         </div>
-                                        <div class=\"progress-bar progress-bar-danger\" style=\"width:",sugH[i,Romantic]/9*100,"%\">
+                                        <div class=\"progress-bar progress-bar-danger\" style=\"width:",sugH[i,Romantic]/sum(sugH[i,Clubbing]+sugH[i,Kid]+sugH[i,Romantic])*100,"%\">
                                           Romantic: ",sugH[i,Romantic],"
                                         </div>
                                       </div>
                               <h4>Activity</h4>
                                      <div class=\"progress\">
-                                        <div class=\"progress-bar progress-bar-info\" style=\"width:",sugH[i,Sport]/12*100,"%\">
+                                        <div class=\"progress-bar progress-bar-success\" style=\"width:",sugH[i,Sport]/sum(sugH[i,Sport]+sugH[i,Shopping]+sugH[i,Cultural]+sugH[i,Adventure])*100,"%\">
                                           Sport: ",sugH[i,Sport],"
                                         </div>
-                                        <div class=\"progress-bar progress-bar-success \" style=\"width:",sugH[i,Shopping]/12*100,"%\">
+                                        <div class=\"progress-bar progress-bar-warning \" style=\"width:",sugH[i,Shopping]/sum(sugH[i,Sport]+sugH[i,Shopping]+sugH[i,Cultural]+sugH[i,Adventure])*100,"%\">
                                           Shopping: ",sugH[i,Shopping],"
                                         </div>
-                                        <div class=\"progress-bar progress-bar-warning\" style=\"width:",sugH[i,Cultural]/12*100,"%\">
+                                        <div class=\"progress-bar progress-bar-info\" style=\"width:",sugH[i,Cultural]/sum(sugH[i,Sport]+sugH[i,Shopping]+sugH[i,Cultural]+sugH[i,Adventure])*100,"%\">
                                           Cultural: ",sugH[i,Cultural],"
                                         </div>
-                                        <div class=\"progress-bar progress-bar-danger\" style=\"width:",sugH[i,Adventure]/12*100,"%\">
+                                        <div class=\"progress-bar progress-bar-danger\" style=\"width:",sugH[i,Adventure]/sum(sugH[i,Sport]+sugH[i,Shopping]+sugH[i,Cultural]+sugH[i,Adventure])*100,"%\">
                                           Adventure: ",sugH[i,Adventure],"
                                         </div>
                                       </div>

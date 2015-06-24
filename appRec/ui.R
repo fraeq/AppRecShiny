@@ -31,7 +31,7 @@ shinyUI(
         sidebarLayout(
           position="right",
             sidebarPanel(width=3,
-              numericInput(inputId="wFb",label="FaceBook weight",value=1,min=0,max=10,step=1),
+              numericInput(inputId="wFb",label="Facebook weight",value=1,min=0,max=10,step=1),
               numericInput(inputId="wTr",label="Preferences weight",value=1,min=0,max=10,step=1),
               h4("Desired Environment"),
               sliderInput(inputId="NatCityUser",label="How much are you interested in staying in a city",min=0,max=3,value="",step=1,round=T,width="100%"),
