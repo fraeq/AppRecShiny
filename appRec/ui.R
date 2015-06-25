@@ -1,7 +1,7 @@
 library(shiny)
 
 shinyUI(
-  fluidPage(
+  fluidPage(theme = "style.css",
     shinyjs::useShinyjs(),
     titlePanel("Vanza Recommender System"),
     sidebarLayout(
@@ -31,8 +31,9 @@ shinyUI(
         sidebarLayout(
           position="right",
             sidebarPanel(width=3,
-              numericInput(inputId="wFb",label="Facebook weight",value=1,min=0,max=10,step=1),
-              numericInput(inputId="wTr",label="Preferences weight",value=1,min=0,max=10,step=1),
+#               numericInput(inputId="wFb",label="Facebook weight",value=1,min=0,max=10,step=1),
+#               numericInput(inputId="wTr",label="Preferences weight",value=5,min=0,max=10,step=1),
+              sliderInput(inputId="W",label="Facebook <-----> Preferences",min=-1,max=1,value=0,step=0.1,ticks=F),
               h4("Desired Environment"),
               sliderInput(inputId="NatCityUser",label="How much are you interested in staying in a city",min=0,max=3,value="",step=1,round=T,width="100%"),
               sliderInput(inputId="NatMountUser",label="How much are you interested in staying in the mountains",min=0,max=3,value="",step=1,round=T,width="100%"),
@@ -53,10 +54,9 @@ shinyUI(
   #           tableOutput("profile"),
   #           tableOutput("tripper"),
   #           tableOutput("user"),
-  #           textOutput("userCheck"),
+  #              textOutput("wei"),
   #           tableOutput("fbscore"),
   #           tableOutput("tripscore")
-              textOutput("woof"),
               uiOutput("sug2")  
               
           )

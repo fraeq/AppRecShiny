@@ -11,7 +11,7 @@ load("data.Rdata")
 userNames$User<-as.character(userNames$User)
 #create the function to associate to the useres a trip randomly choosen
 ### this function modifies lightly the preferences from what the hotel is offering
-shuffler  <- function(x,std=0.25){
+shuffler  <- function(x,std=0.15){
   # the hotel value for each feature is added by a random discrete Value
   x <-x+ round(rnorm(n=1,mean=0,sd=std),0)
   # test if the score is included in the proper values {0,1,2,3}
@@ -20,7 +20,7 @@ shuffler  <- function(x,std=0.25){
 }
 
 # this function creates the dataset with User VaCode (Unique code for every vacation) Preferences and hotel choosen
-funTripper<-function(trip,rep=1500){
+funTripper<-function(trip,rep=2000){
   # rep defines the number of travel to create, so high becouse we have 171 people on fb and I want at least one socre each
   tripper<-matrix(NA,nrow=rep,ncol=14)
   tripper<-as.data.frame(tripper)
@@ -102,7 +102,8 @@ fbScore<-function(fb,test=testUser){
   k<-which(as.character(test[1])==attr(tab,"dimnames")$id)
   # use the user choose in the travel section
   #function for computing the score, input K=row numbmer of the user to be compared and facebook data
-  score<-data.table(User=attr(tab[-k,],"dimnames")$id,FBcor=apply(tab[-k,],1,function(x)cor(x,tab[k,],use="complete.obs",method="spea")))
+  
+  score<-data.table(User=attr(tab[-k,],"dimnames")$id,FBcor=apply(tab[-k,],1,function(x)cor(x,tab[k,])))
   # sorting the data
   score<-score[,,][order(-FBcor)]
   #return(list(score,attr(tab,"dimnames")$id[k]))
@@ -228,7 +229,7 @@ shinyServer(function(input,output,session){
 # create the variables with the values
 profile<-reactive({
 if(input$UserKindVar==1){
-  NatCityUser <- 0
+  NatCityUser <- 1
   NatMountUser <- 3
   NatSeaUser <- 0
   EntClubUser <- 1
@@ -330,16 +331,24 @@ output$userC<-renderText({
 #   )
 # })
 
+output$fbscore<-renderTable({
+  fbScore(fb,userNames[input$userC,User])[[1]]
+})
+
+output$wei<-renderText({
+  paste("FB: ",1-input$W,"Trip: ",1+input$W)
+})
+
 
 userPref<-reactive(c(input$NatCityUser,input$NatMountUser,input$NatSeaUser,input$EntClubUser,input$EntKidUser,input$EntRomUser,input$ActSpoUser,input$ActShoUser,input$ActCulUser,input$ActAdvUser))
 
 output$sug2 <- renderUI({
-  sugH<-suggestion(CorMat=finalCor(wF=input$wFb,wT=input$wTr,fbScore(fb,userNames[input$userC,User])[[1]],tripScore(tripper=tripper,test=userPref())),price=input$PriceUser,num=input$numCh)[,.(hotel,Text,Cat,City,Mountain,Sea,Clubbing,Kid,Romantic,Sport,Shopping,Cultural,Adventure)] 
+  sugH<-suggestion(CorMat=finalCor(wF=(1-input$W),wT=(1+input$W),fbScore(fb,userNames[input$userC,User])[[1]],tripScore(tripper=tripper,test=userPref())),price=input$PriceUser,num=input$numCh)[,.(hotel,Text,Cat,City,Mountain,Sea,Clubbing,Kid,Romantic,Sport,Shopping,Cultural,Adventure)] 
   theHTML <- ""
   for(i in 1:input$numCh){
     suggestionHTML <- paste0("<div class=\"panel panel-default\">
                                <div class=\"panel-heading\">
-                               <h3 class=\"panel-title\">",i,"#  ",sugH[i,hotel],
+                               <h3 class=\"panel-title\">"," #",i,sugH[i,hotel],
                                 " -- ",sugH[i,Cat],
                                 "</h3>
                                </div>
@@ -347,40 +356,40 @@ output$sug2 <- renderUI({
                               
                                  <h4>Environment</h4>
                                     <div class=\"progress\">
-                                      <div class=\"progress-bar progress-bar-warning\" style=\"width:",sugH[i,City]/sum(sugH[i,City]+sugH[i,Mountain]+sugH[i,Sea])*100,"%\">
-                                        City: ",sugH[i,City],"
+                                      <div class=\"progress-bar progress-bar-warning",if(input$NatCityUser==0 | sugH[i,City] < input$NatCityUser)(" off")," \" style=\"width:",sugH[i,City]/sum(sugH[i,City]+sugH[i,Mountain]+sugH[i,Sea])*100,"%\">
+                                        ",ifelse(sugH[i,City]>0,"City",""),": ",sugH[i,City],"
                                       </div>
-                                      <div class=\"progress-bar progress-bar-success \" style=\"width:",sugH[i,Mountain]/sum(sugH[i,City]+sugH[i,Mountain]+sugH[i,Sea])*100,"%\">
+                                      <div class=\"progress-bar progress-bar-success",if(sugH[i,Mountain] < input$NatMountUser){" off"}," \" style=\"width:",sugH[i,Mountain]/sum(sugH[i,City]+sugH[i,Mountain]+sugH[i,Sea])*100,"%\">
                                          Mountain: ",sugH[i,Mountain],"
                                       </div>
-                                      <div class=\"progress-bar progress-bar-info\" style=\"width:",sugH[i,Sea]/sum(sugH[i,City]+sugH[i,Mountain]+sugH[i,Sea])*100,"%\">
+                                      <div class=\"progress-bar progress-bar-info",if(sugH[i,Sea] < input$NatSeaUser){" off"},"\" style=\"width:",sugH[i,Sea]/sum(sugH[i,City]+sugH[i,Mountain]+sugH[i,Sea])*100,"%\">
                                          Sea: ",sugH[i,Sea],"
                                       </div>
                                     </div>
                                 <h4>Entertainment</h4>
                                      <div class=\"progress\">
-                                        <div class=\"progress-bar progress-bar-warning\" style=\"width:",sugH[i,Clubbing]/sum(sugH[i,Clubbing]+sugH[i,Kid]+sugH[i,Romantic])*100,"%\">
+                                        <div class=\"progress-bar progress-bar-warning",if(sugH[i,Clubbing] < input$EntClubUser){" off"},"\" style=\"width:",sugH[i,Clubbing]/sum(sugH[i,Clubbing]+sugH[i,Kid]+sugH[i,Romantic])*100,"%\">
                                           Clubbing: ",sugH[i,Clubbing],"
                                         </div>
-                                        <div class=\"progress-bar progress-bar-success\" style=\"width:",sugH[i,Kid]/sum(sugH[i,Clubbing]+sugH[i,Kid]+sugH[i,Romantic])*100,"%\">
+                                        <div class=\"progress-bar progress-bar-success",if(sugH[i,Kid] < input$EntKidUser){" off"},"\" style=\"width:",sugH[i,Kid]/sum(sugH[i,Clubbing]+sugH[i,Kid]+sugH[i,Romantic])*100,"%\">
                                           Kid: ",sugH[i,Kid],"
                                         </div>
-                                        <div class=\"progress-bar progress-bar-danger\" style=\"width:",sugH[i,Romantic]/sum(sugH[i,Clubbing]+sugH[i,Kid]+sugH[i,Romantic])*100,"%\">
+                                        <div class=\"progress-bar progress-bar-danger",if(sugH[i,Romantic] < input$EntRomUser){" off"},"\" style=\"width:",sugH[i,Romantic]/sum(sugH[i,Clubbing]+sugH[i,Kid]+sugH[i,Romantic])*100,"%\">
                                           Romantic: ",sugH[i,Romantic],"
                                         </div>
                                       </div>
                               <h4>Activity</h4>
                                      <div class=\"progress\">
-                                        <div class=\"progress-bar progress-bar-success\" style=\"width:",sugH[i,Sport]/sum(sugH[i,Sport]+sugH[i,Shopping]+sugH[i,Cultural]+sugH[i,Adventure])*100,"%\">
+                                        <div class=\"progress-bar progress-bar-success",if(sugH[i,Sport] < input$ActSpoUser){" off"},"\" style=\"width:",sugH[i,Sport]/sum(sugH[i,Sport]+sugH[i,Shopping]+sugH[i,Cultural]+sugH[i,Adventure])*100,"%\">
                                           Sport: ",sugH[i,Sport],"
                                         </div>
-                                        <div class=\"progress-bar progress-bar-warning \" style=\"width:",sugH[i,Shopping]/sum(sugH[i,Sport]+sugH[i,Shopping]+sugH[i,Cultural]+sugH[i,Adventure])*100,"%\">
+                                        <div class=\"progress-bar progress-bar-warning",if(sugH[i,Shopping] < input$ActShoUser){" off"}," \" style=\"width:",sugH[i,Shopping]/sum(sugH[i,Sport]+sugH[i,Shopping]+sugH[i,Cultural]+sugH[i,Adventure])*100,"%\">
                                           Shopping: ",sugH[i,Shopping],"
                                         </div>
-                                        <div class=\"progress-bar progress-bar-info\" style=\"width:",sugH[i,Cultural]/sum(sugH[i,Sport]+sugH[i,Shopping]+sugH[i,Cultural]+sugH[i,Adventure])*100,"%\">
+                                        <div class=\"progress-bar progress-bar-info",if(sugH[i,Cultural] != input$ActCulUser){" off"},"\" style=\"width:",sugH[i,Cultural]/sum(sugH[i,Sport]+sugH[i,Shopping]+sugH[i,Cultural]+sugH[i,Adventure])*100,"%\">
                                           Cultural: ",sugH[i,Cultural],"
                                         </div>
-                                        <div class=\"progress-bar progress-bar-danger\" style=\"width:",sugH[i,Adventure]/sum(sugH[i,Sport]+sugH[i,Shopping]+sugH[i,Cultural]+sugH[i,Adventure])*100,"%\">
+                                        <div class=\"progress-bar progress-bar-danger",if(sugH[i,Adventure] != input$ActAdvUser){" off"},"\" style=\"width:",sugH[i,Adventure]/sum(sugH[i,Sport]+sugH[i,Shopping]+sugH[i,Cultural]+sugH[i,Adventure])*100,"%\">
                                           Adventure: ",sugH[i,Adventure],"
                                         </div>
                                       </div>
