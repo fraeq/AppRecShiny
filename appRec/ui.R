@@ -11,6 +11,9 @@ shinyUI(
                    h2("Personal Characteristics"),
                    selectInput(inputId="userC",label="Choose the user for a recommendation:",choices="",width="100%"),
                    textOutput("userC"),
+                   uiOutput("like"),
+                   uiOutput("baubau"), 
+                   tableOutput("char"),
                    h3("Preferences for the vacation"),
                    h4("Which is your budget"),
                    sliderInput(inputId="PriceUser",label="Which is your budget",min=1,max=3,value=sample(x=0:3,size=1),step=1,round=T,width="100%"),
@@ -55,8 +58,7 @@ shinyUI(
   #           tableOutput("tripper"),
   #           tableOutput("user"),
   #              textOutput("wei"),
-  #           tableOutput("fbscore"),
-  #           tableOutput("tripscore")
+  #           tableOutput("fbscore")
               uiOutput("sug2")  
               
           )

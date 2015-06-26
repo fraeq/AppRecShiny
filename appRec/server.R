@@ -106,9 +106,18 @@ fbScore<-function(fb,test=testUser){
   score<-data.table(User=attr(tab[-k,],"dimnames")$id,FBcor=apply(tab[-k,],1,function(x)cor(x,tab[k,])))
   # sorting the data
   score<-score[,,][order(-FBcor)]
-  #return(list(score,attr(tab,"dimnames")$id[k]))
+  #char<-data.table(fb[id==test[1],length(page),by=category][order(-V1)][1:5])
   return(list(score,as.character(test[1])))
+  
 }
+### if needed fast incliude this function over
+fbChar<-function(fb,test=testUser){
+  #function for computing the score, input K=row numbmer of the user to be compared and facebook data
+  fb$id<-as.character(fb$id)
+data.table(fb[id==test[1],length(page),by=category][order(-V1)][1:5])
+  
+}
+
 
 ###################################################################################################
 ####################################### PREFERENCES ###############################################
@@ -338,9 +347,62 @@ output$fbscore<-renderTable({
 output$wei<-renderText({
   paste("FB: ",1-input$W,"Trip: ",1+input$W)
 })
-
-
+output$char<-renderTable({
+  fbChar(fb,userNames[input$userC,User])
+})
 userPref<-reactive(c(input$NatCityUser,input$NatMountUser,input$NatSeaUser,input$EntClubUser,input$EntKidUser,input$EntRomUser,input$ActSpoUser,input$ActShoUser,input$ActCulUser,input$ActAdvUser))
+
+# output$baubau<-renderUI({
+# #   char<-fbChar(fb,userNames[input$userC,User])
+#   HTML(paste0("<div class=\"panel panel-default\">
+#                 <!-- Default panel contents -->
+#                   <div class=\"panel-heading\">Facebook likes  <span class=\"glyphicon glyphicon-exclamation-sign\" aria-hidden=\"true\"></span> </div>
+#                   <!-- Table -->
+#                   <table class=\"table\">
+#                     <tr>
+#                       <td>",fbChar(fb,userNames[input$userC,User])[[1]][1],"</td>
+#                       <td> <span class=\"glyphicon glyphicon-exclamation-sign\" aria-hidden=\"true\"></span> </td>
+#                   </tr>
+#             ",for(i in 1:5){print(
+#                 paste0("
+#                     <tr>
+#                       <td>",fbChar(fb,userNames[input$userC,User])[[1]][i],"</td>
+#                       <td>",fbChar(fb,userNames[input$userC,User])[[2]][i],"</td>
+#                     </tr>")
+#                 )
+#               },"
+#             
+#           </table>
+#       </div>")
+#       )
+# })
+# paste0()
+output$baubau<-renderUI({
+ chart<-fbChar(fb,userNames[input$userC,User])
+  top<-"<div class=\"panel panel-default\">
+                <!-- Default panel contents -->
+                  <div class=\"panel-heading\">Facebook likes  <span class=\"glyphicon glyphicon-exclamation-sign\" aria-hidden=\"true\"></span> </div>
+                  <!-- Table -->
+                  <table class=\"table\">"
+bottom<-"</table>
+      </div>"
+
+char<-""
+for(i in 1:5){
+line<-paste0(
+                      "<td>",chart[[1]][i],"</td>
+                      <td>",chart[[2]][i]," </td>",
+                      if(chart[[2]][i]==1){"<td><span class=\"glyphicon glyphicon-exclamation-sign\" aria-hidden=\"true\"></span></td>"}
+                      else if(chart[[2]][i]==2){"<td><span class=\"glyphicon glyphicon-exclamation-sign\" aria-hidden=\"true\"></span><span class=\"glyphicon glyphicon-exclamation-sign\" aria-hidden=\"true\"></span></td>"}
+                      else{"<td><span class=\"glyphicon glyphicon-exclamation-sign\" aria-hidden=\"true\"></span><span class=\"glyphicon glyphicon-exclamation-sign\" aria-hidden=\"true\"></span><span class=\"glyphicon glyphicon-exclamation-sign\" aria-hidden=\"true\"></span></td>"}
+                      )
+#line2<-paste0(rep("<td> <span class=\"glyphicon glyphicon-exclamation-sign\" aria-hidden=\"true\"></span> </td>",chart[[2]][i]))
+char<-paste0("<tr>",char,line,"</tr>")
+}
+cat(char)
+theHTML<-paste0(top,char,bottom)
+return(HTML(theHTML))
+})
 
 output$sug2 <- renderUI({
   sugH<-suggestion(CorMat=finalCor(wF=(1-input$W),wT=(1+input$W),fbScore(fb,userNames[input$userC,User])[[1]],tripScore(tripper=tripper,test=userPref())),price=input$PriceUser,num=input$numCh)[,.(hotel,Text,Cat,City,Mountain,Sea,Clubbing,Kid,Romantic,Sport,Shopping,Cultural,Adventure)] 
@@ -348,7 +410,7 @@ output$sug2 <- renderUI({
   for(i in 1:input$numCh){
     suggestionHTML <- paste0("<div class=\"panel panel-default\">
                                <div class=\"panel-heading\">
-                               <h3 class=\"panel-title\">"," #",i,sugH[i,hotel],
+                               <h3 class=\"panel-title\">"," #",i," ",sugH[i,hotel],
                                 " -- ",sugH[i,Cat],
                                 "</h3>
                                </div>
@@ -357,40 +419,40 @@ output$sug2 <- renderUI({
                                  <h4>Environment</h4>
                                     <div class=\"progress\">
                                       <div class=\"progress-bar progress-bar-warning",if(input$NatCityUser==0 | sugH[i,City] < input$NatCityUser)(" off")," \" style=\"width:",sugH[i,City]/sum(sugH[i,City]+sugH[i,Mountain]+sugH[i,Sea])*100,"%\">
-                                        ",ifelse(sugH[i,City]>0,"City",""),": ",sugH[i,City],"
+                                        ",ifelse(sugH[i,City]>0,paste0("City: ",sugH[i,City]),""),"
                                       </div>
                                       <div class=\"progress-bar progress-bar-success",if(sugH[i,Mountain] < input$NatMountUser){" off"}," \" style=\"width:",sugH[i,Mountain]/sum(sugH[i,City]+sugH[i,Mountain]+sugH[i,Sea])*100,"%\">
-                                         Mountain: ",sugH[i,Mountain],"
+                                         ",ifelse(sugH[i,Mountain]>0,paste0("Mountain: ",sugH[i,Mountain]),""),"
                                       </div>
                                       <div class=\"progress-bar progress-bar-info",if(sugH[i,Sea] < input$NatSeaUser){" off"},"\" style=\"width:",sugH[i,Sea]/sum(sugH[i,City]+sugH[i,Mountain]+sugH[i,Sea])*100,"%\">
-                                         Sea: ",sugH[i,Sea],"
+                                         ",ifelse(sugH[i,Sea]>0,paste0("Sea: ",sugH[i,Sea]),""),"
                                       </div>
                                     </div>
                                 <h4>Entertainment</h4>
                                      <div class=\"progress\">
                                         <div class=\"progress-bar progress-bar-warning",if(sugH[i,Clubbing] < input$EntClubUser){" off"},"\" style=\"width:",sugH[i,Clubbing]/sum(sugH[i,Clubbing]+sugH[i,Kid]+sugH[i,Romantic])*100,"%\">
-                                          Clubbing: ",sugH[i,Clubbing],"
+                                          ",ifelse(sugH[i,Clubbing]>0,paste0("Clubbing: ",sugH[i,Clubbing]),""),"
                                         </div>
                                         <div class=\"progress-bar progress-bar-success",if(sugH[i,Kid] < input$EntKidUser){" off"},"\" style=\"width:",sugH[i,Kid]/sum(sugH[i,Clubbing]+sugH[i,Kid]+sugH[i,Romantic])*100,"%\">
-                                          Kid: ",sugH[i,Kid],"
+                                          ",ifelse(sugH[i,Kid]>0,paste0("Kid: ",sugH[i,Kid]),""),"
                                         </div>
                                         <div class=\"progress-bar progress-bar-danger",if(sugH[i,Romantic] < input$EntRomUser){" off"},"\" style=\"width:",sugH[i,Romantic]/sum(sugH[i,Clubbing]+sugH[i,Kid]+sugH[i,Romantic])*100,"%\">
-                                          Romantic: ",sugH[i,Romantic],"
+                                          ",ifelse(sugH[i,Romantic]>0,paste0("Romantic: ",sugH[i,Romantic]),""),"
                                         </div>
                                       </div>
                               <h4>Activity</h4>
                                      <div class=\"progress\">
                                         <div class=\"progress-bar progress-bar-success",if(sugH[i,Sport] < input$ActSpoUser){" off"},"\" style=\"width:",sugH[i,Sport]/sum(sugH[i,Sport]+sugH[i,Shopping]+sugH[i,Cultural]+sugH[i,Adventure])*100,"%\">
-                                          Sport: ",sugH[i,Sport],"
+                                          ",ifelse(sugH[i,Sport]>0,paste0("Sport: ",sugH[i,Sport]),""),"
                                         </div>
                                         <div class=\"progress-bar progress-bar-warning",if(sugH[i,Shopping] < input$ActShoUser){" off"}," \" style=\"width:",sugH[i,Shopping]/sum(sugH[i,Sport]+sugH[i,Shopping]+sugH[i,Cultural]+sugH[i,Adventure])*100,"%\">
-                                          Shopping: ",sugH[i,Shopping],"
+                                          ",ifelse(sugH[i,Shopping]>0,paste0("Shopping: ",sugH[i,Shopping]),""),"
                                         </div>
                                         <div class=\"progress-bar progress-bar-info",if(sugH[i,Cultural] != input$ActCulUser){" off"},"\" style=\"width:",sugH[i,Cultural]/sum(sugH[i,Sport]+sugH[i,Shopping]+sugH[i,Cultural]+sugH[i,Adventure])*100,"%\">
-                                          Cultural: ",sugH[i,Cultural],"
+                                          ",ifelse(sugH[i,Cultural]>0,paste0("Cultural: ",sugH[i,Cultural]),""),"
                                         </div>
                                         <div class=\"progress-bar progress-bar-danger",if(sugH[i,Adventure] != input$ActAdvUser){" off"},"\" style=\"width:",sugH[i,Adventure]/sum(sugH[i,Sport]+sugH[i,Shopping]+sugH[i,Cultural]+sugH[i,Adventure])*100,"%\">
-                                          Adventure: ",sugH[i,Adventure],"
+                                          ",ifelse(sugH[i,Adventure]>0,paste0("Adventure: ",sugH[i,Adventure]),""),"
                                         </div>
                                       </div>
                                 
